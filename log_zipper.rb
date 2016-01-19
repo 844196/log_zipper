@@ -1,7 +1,14 @@
 require 'csv'
 require 'time'
 
-input_records = CSV.parse(DATA, :headers => true, :skip_blanks => true)
+raise 'please specified input csv path' unless ARGV[0]
+input_csv_path = ARGV[0]
+input_csv_dir, input_csv_name = File.split(input_csv_path)
+
+output_csv_name = "#{File.basename(input_csv_name, '.csv')}_修正済み2.csv"
+output_csv_path = [input_csv_dir, output_csv_name].join('/')
+
+input_records = CSV.read(input_csv_path, :headers => true, :skip_blanks => true)
   .tap {|ary| ary.each {|row| row['ｲﾍﾞﾝﾄ時刻'] = Time.local(2000, 1, 1, *"#{row['ｲﾍﾞﾝﾄ時刻']}".split(/[\/\-\s:]/).map(&:to_i)) } }
   .tap {|ary| ary.each {|row| row['ｾｯｼｮﾝID'] ||= "#{row['ｴｰｼﾞｪﾝﾄ']}_#{row['ﾛｸﾞｵﾝﾕｰｻﾞ']}" } }
   .map(&:to_h)
@@ -28,18 +35,17 @@ output_records.map! {|record|
 }.compact!
 output_records.sort_by! {|row| [row['ｲﾍﾞﾝﾄ時刻'], row['終了時刻']] }
 
-puts output_records.first.keys.join(',')
-output_records.each do |record|
-  puts record.values.join(',')
+case output_records.size
+when 0
+  File.open(output_csv_path, 'wb') do |file|
+    file.puts 'No Record'
+  end
+  exit 1
+else
+  CSV.open(output_csv_path, 'wb') do |csv|
+    csv << output_records.first.keys
+    output_records.each do |record|
+      csv << record.values
+    end
+  end
 end
-
-__END__
-ｴｰｼﾞｪﾝﾄ,ﾛｸﾞｵﾝﾕｰｻﾞ,日付,ｲﾍﾞﾝﾄ時刻
-clientG,userA,2000/1/1,15:01:00
-clientG,userA,2000/1/1,15:02:00
-clientG,userA,2000/1/1,15:03:00
-clientG,userA,2000/1/1,15:04:00
-clientW,userB,2000/1/1,14:01:00
-clientW,userB,2000/1/1,14:02:00
-clientW,userB,2000/1/1,14:03:00
-clientW,userB,2000/1/1,14:04:00
