@@ -1,20 +1,23 @@
 # vim:fileencoding=utf-8:
 
+require 'kconv'
 require 'csv'
 require 'time'
 
 raise 'please specified input csv path' unless ARGV[0]
-input_csv_path = ARGV[0]
-input_csv_dir, input_csv_name = File.split(input_csv_path)
-
+input_csv_dir, input_csv_name = File.split(ARGV[0].encode('UTF-8'))
+input_csv_path = File.join(input_csv_dir, input_csv_name)
 output_csv_name = "#{File.basename(input_csv_name, '.csv')}_修正済み2.csv"
-output_csv_path = [input_csv_dir, output_csv_name].join('/')
+output_csv_path = File.join(input_csv_dir, output_csv_name)
 
-input_records = CSV.read(input_csv_path, :headers => true, :skip_blanks => true)
-  .tap {|ary| ary.each {|row| row['ｲﾍﾞﾝﾄ時刻'] = Time.local(2000, 1, 1, *"#{row['ｲﾍﾞﾝﾄ時刻']}".split(/[\/\-\s:]/).map(&:to_i)) } }
-  .tap {|ary| ary.each {|row| row['ｾｯｼｮﾝID'] ||= "#{row['ｴｰｼﾞｪﾝﾄ']}_#{row['ﾛｸﾞｵﾝﾕｰｻﾞ']}" } }
-  .map(&:to_h)
-  .sort_by! {|row| [row['ｴｰｼﾞｪﾝﾄ'], row['ｲﾍﾞﾝﾄ時刻'], row['ﾛｸﾞｵﾝﾕｰｻﾞ']] }
+input_records = nil
+File.open(input_csv_path) do |original|
+  encode = Kconv.guess(original.read).name
+  input_records = CSV.read(original.path, "rb:BOM|#{encode}:UTF-8", :headers => true, :skip_blanks => true).map(&:to_h)
+    .tap {|ary| ary.each {|row| row['ｲﾍﾞﾝﾄ時刻'] = Time.local(2000, 1, 1, *"#{row['ｲﾍﾞﾝﾄ時刻']}".split(/[\/\-\s:]/).map(&:to_i)) } }
+    .tap {|ary| ary.each {|row| row['ｾｯｼｮﾝID'] ||= "#{row['ｴｰｼﾞｪﾝﾄ']}_#{row['ﾛｸﾞｵﾝﾕｰｻﾞｰ']}" } }
+    .sort_by! {|row| [row['ｴｰｼﾞｪﾝﾄ'], row['ｲﾍﾞﾝﾄ時刻'], row['ﾛｸﾞｵﾝﾕｰｻﾞｰ']] }
+end
 
 output_records = []
 loop do
@@ -44,7 +47,8 @@ when 0
   end
   exit 1
 else
-  CSV.open(output_csv_path, 'wb') do |csv|
+  File.open(output_csv_path, 'wb') {|f| f.print("\xEF\xBB\xBF") }
+  CSV.open(output_csv_path, 'ab') do |csv|
     csv << output_records.first.keys
     output_records.each do |record|
       csv << record.values
