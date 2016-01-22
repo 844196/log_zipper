@@ -29,12 +29,16 @@ module LogZipper::Function
   end
 
   def cal_uptime(startup, shutdown)
-    return nil unless shutdown
     label = LogZipper.config.field_label
-    startup.dup.tap do |out|
-      out[label['uptime']]   = time_to_hms(Time.at(shutdown[label['time']] - startup[label['time']]).utc)
-      out[label['time']]     = time_to_hms(startup[label['time']])
-      out[label['shutdown']] = time_to_hms(shutdown[label['time']])
+
+    startup_time  = startup[label['time']]
+    shutdown_time = shutdown[label['time']]
+    uptime        = Time.at(shutdown_time - startup_time).utc
+
+    startup.tap do |out|
+      out[label['uptime']]   = time_to_hms(uptime)
+      out[label['time']]     = time_to_hms(startup_time)
+      out[label['shutdown']] = time_to_hms(shutdown_time)
     end
   end
 
