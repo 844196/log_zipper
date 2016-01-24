@@ -20,6 +20,8 @@ module LogZipper
     end
 
     def convert(&block)
+      label = LogZipper.config.field_label
+      sort_rows [label['client'], label['time'], label['user']]
       @rows = rows_zip(@rows)
       yield self if block_given?
     end

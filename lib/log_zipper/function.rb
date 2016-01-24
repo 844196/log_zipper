@@ -12,7 +12,7 @@ module LogZipper::Function
           row[label['time']] = Time.local(*"#{row[label['date']]} #{row[label['time']]}".split(/[\/\-\s:]/).map(&:to_i))
           row[label['session']] ||= "#{row[label['client']]}_#{row[label['user']]}"
           row
-        }.sort_by {|row| [row[label['client']], row[label['time']], row[label['user']]] }
+        }
     end
   end
 
