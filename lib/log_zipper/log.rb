@@ -5,8 +5,8 @@ module LogZipper
     include LogZipper::Function
     attr_accessor :dir, :name, :ext, :rows
 
-    def initialize(path)
-      @dir, basename, @ext = File.split(path).tap {|ary| ary << File.extname(ary[1]) }
+    def initialize(original_path)
+      @dir, basename, @ext = File.split(original_path).tap {|ary| ary << File.extname(ary[1]) }
       @name = File.basename(basename, @ext)
       @rows = import_csv(path)
     end
