@@ -8,7 +8,7 @@ module LogZipper
     def initialize(original_path)
       @dir, basename, @ext = File.split(original_path).tap {|ary| ary << File.extname(ary[1]) }
       @name = File.basename(basename, @ext)
-      @rows = import_csv(path)
+      @rows = LogZipper::CSV.import(path)
     end
 
     def path
@@ -16,7 +16,7 @@ module LogZipper
     end
 
     def to_csv
-      CSV::Table.new(@rows).to_csv
+      ::CSV::Table.new(@rows).to_csv
     end
 
     def convert(&block)
@@ -31,7 +31,7 @@ module LogZipper
     end
 
     def sort_columns(order)
-      @rows.map! {|row| CSV::Row.new(order, order.map {|field| row[field] }) }
+      @rows.map! {|row| ::CSV::Row.new(order, order.map {|field| row[field] }) }
     end
   end
 end

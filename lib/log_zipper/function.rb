@@ -3,19 +3,6 @@
 module LogZipper::Function
   private
 
-  def import_csv(csv_path)
-    File.open(csv_path) do |original|
-      encode = Kconv.guess(original.read).name
-      label = LogZipper.config.field_label
-      CSV.read(original.path, "rb:BOM|#{encode}:UTF-8", :headers => true, :skip_blanks => true)
-        .map {|row|
-          row[label['time']] = Time.local(*"#{row[label['date']]} #{row[label['time']]}".split(/[\/\-\s:]/).map(&:to_i))
-          row[label['session']] ||= "#{row[label['client']]}_#{row[label['user']]}"
-          row
-        }
-    end
-  end
-
   def rows_zip(rows)
     label = LogZipper.config.field_label
     out = []
