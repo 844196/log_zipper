@@ -25,6 +25,10 @@ module LogZipper
       @@defaults
     end
 
+    def to_h
+      instance_variables.map {|name| [name.to_s.gsub(/\A@/, '').to_sym, instance_variable_get(name)] }.to_h
+    end
+
     attr_accessor(*@@defaults.keys)
   end
 
@@ -38,7 +42,8 @@ module LogZipper
     end
 
     def yaml_load(path: nil)
-      YAML.load_file(path).each {|k,v| config.send("#{k}=", v) }
+      yaml = YAML.load_file(path).map {|k,v| [k.to_sym, v] }.to_h.select {|k,_| config.to_h.has_key?(k) }
+      config.to_h.merge(yaml).each {|k,v| config.send("#{k}=", v) }
     end
   end
 end
