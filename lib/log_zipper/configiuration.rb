@@ -42,8 +42,10 @@ module LogZipper
     end
 
     def yaml_load(path: nil)
-      yaml = YAML.load_file(path).map {|k,v| [k.to_sym, v] }.to_h.select {|k,_| config.to_h.has_key?(k) }
-      config.to_h.merge(yaml).each {|k,v| config.send("#{k}=", v) }
+      LogZipper::Encode.utf8block(path) do |file|
+        yaml = YAML.load_file(file).map {|k,v| [k.to_sym, v] }.to_h.select {|k,_| config.to_h.has_key?(k) }
+        config.to_h.merge(yaml).each {|k,v| config.send("#{k}=", v) }
+      end
     end
   end
 end

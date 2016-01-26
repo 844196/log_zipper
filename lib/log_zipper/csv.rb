@@ -4,9 +4,8 @@ module LogZipper::CSV
   class << self
     def import(csv_path)
       table = []
-      File.open(csv_path) do |original|
-        encode = Kconv.guess(original.read).name
-        table = ::CSV.read(original.path, "rb:BOM|#{encode}:UTF-8", :headers => true, :skip_blanks => true)
+      LogZipper::Encode.utf8block(csv_path) do |file|
+        table = ::CSV.read(file, :headers => true, :skip_blanks => true)
       end
 
       label = LogZipper.config.field_label
