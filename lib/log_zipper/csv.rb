@@ -3,17 +3,23 @@
 module LogZipper::CSV
   class << self
     def import(csv_path)
+      label = LogZipper.config.field_label
       table = []
+
       LogZipper::Encode.utf8block(csv_path) do |file|
-        table = ::CSV.read(file, :headers => true, :skip_blanks => true)
+        LogZipper.logger.info(self) { "start: #{file.path}" }
+
+        ::CSV.foreach(file, :headers => true, :skip_blanks => true) do |row|
+          row[label['time']] = to_time(row[label['date']], row[label['time']])
+          row[label['session']] ||= to_session(row[label['client']], row[label['user']])
+          LogZipper.logger.debug(self) { "import: #{row.inspect}" }
+          table << row
+        end
+
+        LogZipper.logger.info(self) { "finish, imported table size: #{table.size}" }
       end
 
-      label = LogZipper.config.field_label
-      table.map do |row|
-        row[label['time']] = to_time(row[label['date']], row[label['time']])
-        row[label['session']] ||= to_session(row[label['client']], row[label['user']])
-        row
-      end
+      table
     end
 
     private
