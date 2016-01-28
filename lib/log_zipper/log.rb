@@ -26,10 +26,10 @@ module LogZipper
     end
 
     def rows_zip
-      label = LogZipper.config.field_label
-      out = []
-      out << shift_by(@rows) {|row| row[label['session']] == rows.first[label['session']] } until @rows.size.zero?
-      @rows = out.map {|sessions| cal_uptime(sessions.first, sessions.last) }.compact
+      @rows = @rows
+        .chunk {|row| row[LogZipper.config.field_label['session']] }
+        .map(&:pop)
+        .map {|sessions| cal_uptime(sessions.first, sessions.last) }
     end
 
     def sort_rows(order)
@@ -41,13 +41,6 @@ module LogZipper
     end
 
     private
-
-    def shift_by(array, &block)
-      i = array.each_with_index.each_with_object(nil) do |(item, index), n|
-        break index unless block.call(item)
-      end
-      i ? array.shift(i) : array.slice!(0..-1)
-    end
 
     def cal_uptime(startup, shutdown)
       label = LogZipper.config.field_label
